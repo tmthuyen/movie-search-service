@@ -1,4 +1,17 @@
 services:
+  # nginx
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    volumes:
+      - ./nginx_docker.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - search-service
+    networks:
+      - search-network
+
   # postgres
   db-postgres:
     image: postgres:16
@@ -11,7 +24,7 @@ services:
       PGTZ: Asia/Ho_Chi_Minh
     restart: unless-stopped
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     deploy:
       resources:
         limits:
@@ -40,9 +53,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: 123456
       TZ: Asia/Ho_Chi_Minh
       PGTZ: Asia/Ho_Chi_Minh
-    # restart: unless-stopped
-    ports:
-      - '8010:8010'
+    restart: unless-stopped
+    # ports:
+    #   - '127.0.0.1:8010:8010'
     # limit
     deploy:
       resources:
