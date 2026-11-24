@@ -1,0 +1,67 @@
+services:
+  # postgres
+  db-postgres:
+    image: postgres:16
+    #    restart: always
+    environment:
+      POSTGRES_DB: search_db
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 123456
+      TZ: Asia/Ho_Chi_Minh
+      PGTZ: Asia/Ho_Chi_Minh
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    volumes:
+      - db-postgres-data:/var/lib/postgresql/data
+    networks:
+      - search-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U root -d search_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  search-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db-postgres:5432/search_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+      TZ: Asia/Ho_Chi_Minh
+      PGTZ: Asia/Ho_Chi_Minh
+    # restart: unless-stopped
+    ports:
+      - '8010:8010'
+    # limit
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+
+    networks:
+      - search-network
+
+networks:
+  search-network:
+    name: search-network
+
+volumes:
+  db-postgres-data:
